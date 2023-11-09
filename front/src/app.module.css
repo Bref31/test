@@ -1,0 +1,15 @@
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: grid; 
+  grid-template-columns: 1fr; 
+  grid-template-rows: max-content 1fr; 
+  gap: 0px 0px; 
+  grid-template-areas: 
+    "head"
+    "content"; 
+}
+
+.sectionPanel {
+  overflow-y: auto !important;
+}

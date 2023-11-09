@@ -1,0 +1,14 @@
+{
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "singleQuote": true,
+  "semi": true,
+  "importOrder": [
+    "^(store|utils|types)(/*)((?!scss).)*$",
+    "^(@mui|components|customMUI|[.*/])/((?!scss).)*$",
+    "^(.*)(.css|.scss)$"
+  ],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "printWidth": 88
+}

@@ -1,0 +1,70 @@
+{
+  "name": "smartlink-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "tsc && vite build",
+    "server": "vite preview",
+    "generate-client": "openapi --input http://127.0.0.1:8000/openapi.json OpenAPI.BASE='/api/v1' --output ./src/client --client axios"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "dependencies": {
+    "@emotion/react": "^11.10.8",
+    "@emotion/styled": "^11.10.8",
+    "@hookform/resolvers": "^3.3.0",
+    "@mui/base": "^5.0.0-beta.16",
+    "@mui/icons-material": "^5.14.6",
+    "@mui/material": "^5.14.6",
+    "@mui/system": "^5.14.10",
+    "@mui/x-data-grid": "^6.12.0",
+    "@mui/x-date-pickers": "^6.12.0",
+    "@reduxjs/toolkit": "^1.9.5",
+    "allotment": "^1.19.3",
+    "axios": "^1.5.0",
+    "cesium": "^1.109.0",
+    "csstype": "^3.0.10",
+    "http-proxy-middleware": "^2.0.6",
+    "lodash": "^4.17.21",
+    "luxon": "^3.4.3",
+    "notistack": "^3.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.45.4",
+    "react-redux": "^8.0.7",
+    "yup": "^1.2.0"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.1.1",
+    "@types/lodash": "^4.14.198",
+    "@types/luxon": "^3.3.2",
+    "@types/node": "^20.5.9",
+    "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react-swc": "^3.3.2",
+    "openapi-typescript-codegen": "^0.25.0",
+    "prettier": "^3.0.3",
+    "rollup": "^2.25.0",
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9",
+    "vite-plugin-cesium": "^1.2.22",
+    "vite-tsconfig-paths": "^4.2.0"
+  }
+}
