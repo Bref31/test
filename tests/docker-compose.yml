@@ -1,0 +1,18 @@
+version: "3"
+
+# docker exec -i tests-db-1 sh -c 'mariadb -usmartlink -psmartlink smartlink' < ./smartlink.sql
+
+services:
+  db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=smartlink
+      - MYSQL_USER=smartlink
+      - MYSQL_PASSWORD=smartlink
+    ports:
+      - 3307:3306
+
+volumes:
+  db:
