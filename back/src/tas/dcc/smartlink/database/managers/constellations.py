@@ -96,3 +96,9 @@ class ConstellationManager(BaseManager[models.Constellation, Constellation, int]
                 for plane in model.planes
             ],
         )
+
+def delete(self, constellation_id: int):
+    constellation = self.db.query(Constellation).filter_by(id=constellation_id).first()
+    if constellation:
+        self.db.delete(constellation)
+        self.db.commit()

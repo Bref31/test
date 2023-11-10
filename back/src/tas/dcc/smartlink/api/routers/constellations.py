@@ -1,85 +1,104 @@
-from typing import Annotated
+from datetime import timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from poliastro.twobody import Orbit
 from sqlalchemy.orm import Session
 
-from ...database import get_database
-from ...database.managers.constellations import ConstellationManager
-from ..converters.constellation import (
-    constellation_schema_from_model,
-    orbit_schema_to_model,
-)
-from ..schemas import (
-    Constellation,
-    ConstellationCreate,
-    ConstellationInfo,
-    ErrorMessage,
-)
-
-router = APIRouter(prefix="/constellations", tags=["constellations"])
+from ... import models
+from ..models import Constellation, Plane, Satellite, SatelliteOrbit
+from .base import BaseManager
 
 
-@router.get(
-    "/",
-    responses={200: {"model": list[ConstellationInfo]}, 500: {"model": ErrorMessage}},
-    operation_id="list_constellations",
-)
-async def list_constellations(db: Annotated[Session, Depends(get_database)]):
-    return [
-        ConstellationInfo(
-            id=c.id,
-            name=c.name,
-            n_planes=len(c.planes),
-            n_per_plane=len(c.planes[0].satellites),
-        )
-        for c in ConstellationManager(db).all()
-    ]
+def _orbit(orbit: SatelliteOrbit) -> Orbit:
+    import astropy.units as u
+    from astropy.time import Time
+    from poliastro.bodies import Earth
+
+    return Orbit.from_classical(
+        attractor=Earth,
+        a=u.Quantity(orbit.semi_major_axis, u.km),
+        ecc=u.Quantity(orbit.eccentricity, u.one),
+        inc=u.Quantity(orbit.inclination, u.deg),
+        raan=u.Quantity(orbit.raan, u.deg),
+        argp=u.Quantity(orbit.argument_of_perigee, u.deg),
+        nu=u.Quantity(orbit.true_anomaly, u.deg),
+        epoch=Time(orbit.epoch),
+    )
 
 
-@router.get(
-    "/{constellation_id}",
-    responses={200: {"model": Constellation}, 404: {"model": ErrorMessage}},
-    operation_id="get_constellation",
-)
-async def get_constellation_by_id(
-    constellation_id: int, db: Annotated[Session, Depends(get_database)]
-):
-    constellation = ConstellationManager(db).load(constellation_id)
-
-    if constellation is None:
-        raise HTTPException(
-            status_code=404,
-            detail={"message": f"constellation {constellation_id} not found"},
-        )
-
-    return constellation_schema_from_model(constellation)
-
-
-@router.post(
-    "/create",
-    responses={200: {"model": Constellation}, 422: {"model": ErrorMessage}},
-    operation_id="create_constellation",
-)
-async def create_constellation(
-    request: ConstellationCreate, db: Annotated[Session, Depends(get_database)]
-):
-    from ...utils.builder import make_constellation
-
-    try:
-        manager = ConstellationManager(db)
-        constellation_db = manager.store(
-            make_constellation(
-                name=request.name,
-                n_planes=request.n_planes,
-                n_per_plane=request.n_per_plane,
-                orbit_parameters=orbit_schema_to_model(request.orbit_parameters),
+def convert_from_db(value: Constellation) -> models.Constellation:
+    return models.Constellation(
+        id=value.id,
+        name=value.name,
+        planes=[
+            models.Plane(
+                index=plane.index,
+                satellites=[
+                    models.Satellite(
+                        id=satellite.id,
+                        index=satellite.index,
+                        orbit=_orbit(satellite.orbit),
+                    )
+                    for satellite in plane.satellites
+                ],
             )
+            for plane in value.planes
+        ],
+    )
+
+
+class SatelliteManager(BaseManager[models.Satellite, Satellite, int]):
+    def __init__(self, db: Session):
+        super().__init__(db, Satellite, Satellite.id, lambda s: s.id)
+
+    def convert_from_database(self, model: Satellite) -> models.Satellite:
+        return models.Satellite(
+            id=model.id,
+            index=model.index,
+            orbit=_orbit(model.orbit),
         )
-        constellation = manager.load(constellation_db.id)
-        assert constellation is not None
-        return constellation_schema_from_model(constellation)
-    except Exception as e:
-        raise HTTPException(
-            status_code=422,
-            detail={"message": str(e)},
+
+    def convert_to_database(self, model: models.Satellite) -> Satellite:
+        import astropy.units as u
+
+        db_orbit = SatelliteOrbit(
+            epoch=model.orbit.epoch.to_datetime(timezone=timezone.utc),
+            semi_major_axis=model.orbit.a.to_value(u.km),
+            eccentricity=model.orbit.ecc.to_value(u.one),
+            inclination=model.orbit.inc.to_value(u.deg),
+            argument_of_perigee=model.orbit.argp.to_value(u.deg),
+            true_anomaly=model.orbit.nu.to_value(u.deg),
+            raan=model.orbit.raan.to_value(u.deg),
         )
+        return Satellite(id=model.id, index=model.index, orbit=db_orbit)
+
+
+class ConstellationManager(BaseManager[models.Constellation, Constellation, int]):
+    def __init__(self, db: Session):
+        super().__init__(db, Constellation, Constellation.id, lambda c: c.id)
+
+        self._satellite_manager = SatelliteManager(db)
+
+    def convert_from_database(self, model: Constellation) -> models.Constellation:
+        return convert_from_db(model)
+
+    def convert_to_database(self, model: models.Constellation) -> Constellation:
+        return Constellation(
+            id=model.id,
+            name=model.name,
+            planes=[
+                Plane(
+                    index=plane.index,
+                    satellites=[
+                        self._satellite_manager.store_or_load(s, commit=False)
+                        for s in plane.satellites
+                    ],
+                )
+                for plane in model.planes
+            ],
+        )
+
+def delete(self, constellation_id: int):
+    constellation = self.db.query(Constellation).filter_by(id=constellation_id).first()
+    if constellation:
+        self.db.delete(constellation)
+        self.db.commit()

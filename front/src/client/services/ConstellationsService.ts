@@ -34,8 +34,8 @@ export class ConstellationsService {
      * @throws ApiError
      */
     public static getConstellation(
-constellationId: number,
-): CancelablePromise<Constellation> {
+        constellationId: number,
+    ): CancelablePromise<Constellation> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/constellations/{constellation_id}',
@@ -56,8 +56,8 @@ constellationId: number,
      * @throws ApiError
      */
     public static createConstellation(
-requestBody: ConstellationCreate,
-): CancelablePromise<Constellation> {
+        requestBody: ConstellationCreate,
+    ): CancelablePromise<Constellation> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/constellations/create',
@@ -69,4 +69,22 @@ requestBody: ConstellationCreate,
         });
     }
 
+    /**
+     * Delete Constellation
+     * @param constellationId 
+     * @returns void Successful Response
+     * @throws ApiError
+     */
+    public static deleteConstellation(
+        constellationId: number,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: `/constellations/${constellationId}`,
+            errors: {
+                404: `Not Found`,
+                422: `Validation Error`,
+            },
+        });
+    }
 }
