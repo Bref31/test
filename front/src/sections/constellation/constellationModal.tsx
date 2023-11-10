@@ -2,6 +2,7 @@ import { ModalTitle, SectionModal } from 'components/modal';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { FieldError, FieldErrors, useForm } from 'react-hook-form';
 import s from 'components/modal/modal.module.css';
+import { ConstellationsService } from 'client/services/ConstellationsService'; // Utilisez le chemin correct vers votre service
 
 import constellationSchema from './schema';
 import { Box, Button, MenuItem, Select, TextField, Typography } from '@mui/material';
@@ -251,7 +252,11 @@ function ConstellationModal({ open, setOpen }: Props) {
         >
           Create Constellation
         </Button>
+        <button onClick={() => deleteConstellation(constellationId)}>Supprimer</button>
+
+
       </form>
+
     </SectionModal>
   );
 }
